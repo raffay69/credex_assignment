@@ -1,4 +1,7 @@
+import axios from "axios";
 import { useState } from "react";
+import { BACKEND_URL, FRONTEND_URL } from "../constants";
+import toast from "react-hot-toast";
 
 const SAMPLE_DATA = {
   findings: {
@@ -322,28 +325,43 @@ function OptimalBanner() {
   );
 }
 
-function EmailCapture({ isOptimal }) {
+function EmailCapture({ setEmail, handleEmailReport, sendingEmail }) {
   return (
     <div className="bg-slate-900 rounded-xl p-[22px] border border-slate-800 mb-3">
       <p className="font-bold text-base text-slate-50 m-0 mb-1">
-        {isOptimal ? "Get notified when savings appear" : "Get your full report by email"}
+        Get your full report by email
       </p>
       <p className="text-[13px] text-slate-400 m-0 mb-4 leading-[1.55]">
-        {isOptimal
-          ? "We monitor pricing changes and new plans across your stack. You'll hear from us when something relevant changes."
-          : "We'll send a detailed breakdown with step-by-step switching instructions for each finding."}
+        We'll send a detailed breakdown with step-by-step switching instructions for each finding.
       </p>
       <div className="flex gap-2 flex-wrap">
         <input 
           type="email" 
+          onChange={(e) => setEmail(e.target.value)}
+          disabled={sendingEmail}
           placeholder="you@company.com" 
-          className="flex-1 min-w-[200px] py-[9px] px-[13px] border border-slate-700 rounded-lg text-[13px] text-slate-50 outline-none bg-slate-800 focus:border-emerald-400 transition-colors placeholder:text-slate-500" 
+          className="flex-1 min-w-[200px] py-[9px] px-[13px] border border-slate-700 rounded-lg text-[13px] text-slate-50 outline-none bg-slate-800 focus:border-emerald-400 transition-colors placeholder:text-slate-500 disabled:opacity-50 disabled:cursor-not-allowed" 
         />
-        <button className="bg-emerald-400 text-slate-900 border-none rounded-lg py-[9px] px-6 font-bold text-[13px] cursor-pointer whitespace-nowrap hover:bg-emerald-300 transition-all duration-200">
-          {isOptimal ? "Notify Me" : "Send Report"}
+        <button 
+          onClick={handleEmailReport} 
+          disabled={sendingEmail}
+          className={`bg-emerald-400 text-slate-900 border-none rounded-lg py-[9px] px-6 font-bold text-[13px] flex items-center justify-center gap-2 whitespace-nowrap transition-all duration-200 ${
+            sendingEmail ? 'opacity-80 cursor-wait' : 'cursor-pointer hover:bg-emerald-300'
+          }`}
+        >
+          {sendingEmail ? (
+            <>
+              <svg className="animate-spin -ml-1 h-4 w-4 text-slate-900" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Sending...
+            </>
+          ) : (
+            "Send Report"
+          )}
         </button>
       </div>
-      <p className="text-[11px] text-slate-500 m-0 mt-2.5">No spam. Unsubscribe anytime.</p>
     </div>
   );
 }
@@ -376,6 +394,8 @@ function ShareSection({ onShare, copied }) {
 export default function AuditResults({ data = SAMPLE_DATA, setState }) {
   const { findings, maxSavingPerTool, monthlySave, yearlySave, summary  , id } = data;
   const [copied, setCopied] = useState(false);
+  const [email , setEmail] = useState()
+  const [sendingEmail , setSendingEmail ] = useState(false)
 
   const toolCount = Object.keys(findings).length;
   const findingCount = Object.values(findings).reduce((s, f) => s + f.length, 0);
@@ -392,13 +412,35 @@ export default function AuditResults({ data = SAMPLE_DATA, setState }) {
 
   const handleShare = async (id : string) => {
     try {
-      await navigator.clipboard.writeText(`http://localhost/share/${id}`);
+      await navigator.clipboard.writeText(`${FRONTEND_URL}/share/${id}`);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
       console.error('Failed to copy link', err);
     }
   };
+
+  const handleEmailReport = async()=>{
+    try{
+        setSendingEmail(true)
+        const res = await axios.post(`${BACKEND_URL}/email` , {
+            email, id
+        })
+        if(res.status === 200){
+            toast.success("Email Sent Successfully", {
+            className: "bg-slate-900 text-slate-50 border border-slate-800 font-bold text-[13px] shadow-sm",
+            duration : 2000
+        });
+        }
+    } catch(e){
+        toast.error(e.message, {
+            className: "bg-slate-900 text-slate-50 border border-slate-800 font-bold text-[13px] shadow-sm",
+            duration : 2000
+        });
+    } finally {
+        setSendingEmail(false)
+    }
+  }
 
   return (
     <div className="bg-slate-50 min-h-screen pt-8 px-4 pb-16 font-sans">
@@ -485,7 +527,7 @@ export default function AuditResults({ data = SAMPLE_DATA, setState }) {
         </div>
 
         {/* 6. Email capture */}
-        <EmailCapture isOptimal={isOptimal} />
+        <EmailCapture setEmail={setEmail} handleEmailReport={handleEmailReport} sendingEmail={sendingEmail}/>
 
         {/* 7. Dedicated Share Section */}
         <ShareSection onShare={()=>handleShare(id)} copied={copied} />

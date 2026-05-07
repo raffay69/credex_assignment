@@ -5,7 +5,11 @@ import { prisma } from "./db.js"
 import { Resend } from 'resend';
 import fs from "fs"
 import { generatePDF } from "./pdf.js";
+import "dotenv/config"
+import { dirname } from "path";
+import { fileURLToPath } from "url";
 
+const __dirname = dirname(fileURLToPath(import.meta.url))
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 const app = express()
@@ -51,7 +55,7 @@ app.post("/email" , async (req , res)=>{
             id
         }
     })
-    const data = JSON.parse(rawData)
+    const data = JSON.parse(rawData.content)
     // generate the pdf
     generatePDF(data)
     // send the email using resend
@@ -59,10 +63,10 @@ app.post("/email" , async (req , res)=>{
     const attachment = fs.readFileSync(filepath).toString('base64');
 
     await resend.emails.send({
-    from: 'Acme <onboarding@resend.dev>',
-    to: ['delivered@resend.dev'],
+    from: 'Credex <onboarding@resend.dev>',
+    to: [email],
     subject: `We found $${data.monthlySave}/mo in potential savings`,
-    text: `<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #334155; line-height: 1.6; max-w-2xl; margin: 0 auto;">
+    html: `<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #334155; line-height: 1.6; max-w-2xl; margin: 0 auto;">
             <p>Hi,</p>
             
             <p>Thank you for requesting an audit. Your personalized stack optimization report is attached.</p>
@@ -81,6 +85,8 @@ app.post("/email" , async (req , res)=>{
         },
     ],
     });
+    // delete the local file
+    fs.unlinkSync(filepath)
 
     res.sendStatus(200)
 })

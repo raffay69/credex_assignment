@@ -1,31 +1,6 @@
 import PDFDocument from 'pdfkit';
 import { createWriteStream } from 'fs';
 
-const SAMPLE_DATA = {
-  findings: {
-    gemini: [
-      { name: 'gemini', type: 'overspend', reason: 'the expected spend for pro/1 should be 20 not 35, check for hidden charges', monthlySaving: 15, annualSaving: 180 },
-      { name: 'gemini', type: 'cheaper-plan', reason: 'Cheaper plans available like plus', monthlySaving: 27, annualSaving: 324 },
-      { name: 'gemini', type: 'alternatives', reason: 'Cheaper alternative plans available', alternatives: [{ name: 'chatgpt', planName: 'go', price: 8, saving: 27 }, { name: 'claude', planName: 'pro', price: 17, saving: 18 }, { name: 'chatgpt', planName: 'plus', price: 20, saving: 15 }], monthlySaving: 27, annualSaving: 324 }
-    ],
-    claude: [
-      { name: 'claude', type: 'wrong-plan', reason: 'team at $20/seat ($40/mo) is overkill for 2 seat(s) — switch to pro at $17/seat ($34/mo)', monthlySaving: 6, annualSaving: 72 },
-      { name: 'claude', type: 'api-to-flat', reason: 'Spending $150/mo on API — flat max_5x plan at $100/mo would be cheaper if usage is consistent', monthlySaving: 50, annualSaving: 600 },
-      { name: 'claude', type: 'alternatives', reason: 'Cheaper alternative plans available', alternatives: [{ name: 'chatgpt', planName: 'go', price: 8, saving: 142 }, { name: 'gemini', planName: 'plus', price: 8, saving: 142 }], monthlySaving: 142, annualSaving: 1704 }
-    ],
-    cursor: [
-      { name: 'cursor', type: 'cheaper-plan', reason: 'Cheaper plans available like pro, pro_plus', monthlySaving: 140, annualSaving: 1680 },
-    ],
-    chatgpt: [
-      { name: 'chatgpt', type: 'api-use-credits', reason: 'API spend of $6/mo is low — prepaid credits would be more cost effective than any flat plan', monthlySaving: 0, annualSaving: 0 }
-    ]
-  },
-  maxSavingPerTool: { gemini: 27, claude: 142, cursor: 140, chatgpt: 0 },
-  summary : "This team is overpaying across multiple vendors. Consolidating API usage to flat tiers and switching under-utilized Team plans to Pro plans yields significant monthly returns.",
-  monthlySave: 309,
-  yearlySave: 3708
-};
-
 const TOOL_META = {
   gemini: { label: "Google Gemini", color: "#10b981" },
   claude: { label: "Anthropic Claude", color: "#d97757" },
@@ -33,7 +8,7 @@ const TOOL_META = {
   chatgpt: { label: "ChatGPT", color: "#10a37f" }
 };
 
-function generatePDF() {
+export function generatePDF(data) {
   const doc = new PDFDocument({ size: 'A4', margin: 40 });
   doc.pipe(createWriteStream('audit_report.pdf'));
 
@@ -56,18 +31,18 @@ function generatePDF() {
   doc.moveDown(0.5);
 
   doc.font('Helvetica-Bold').fontSize(26).fillColor('#0f172a').text('Found ', startX, doc.y, { continued: true })
-     .fillColor('#059669').text(`$${SAMPLE_DATA.monthlySave}/mo`, { continued: true })
+     .fillColor('#059669').text(`$${data.monthlySave}/mo`, { continued: true })
      .fillColor('#0f172a').text(' in potential savings.');
   
   doc.moveDown(0.5);
-  const totalFindings = Object.values(SAMPLE_DATA.findings).reduce((acc, curr) => acc + curr.length, 0);
-  doc.font('Courier').fontSize(11).fillColor('#64748b').text(`${Object.keys(SAMPLE_DATA.findings).length} tools audited · identifying details stripped for privacy`);
+  const totalFindings = Object.values(data.findings).reduce((acc, curr) => acc + curr.length, 0);
+  doc.font('Courier').fontSize(11).fillColor('#64748b').text(`${Object.keys(data.findings).length} tools audited · identifying details stripped for privacy`);
   doc.moveDown(2);
 
   // --- 2. STATS GRID ---
   const stats = [
-    { label: 'Monthly Savings', val: `$${SAMPLE_DATA.monthlySave}`, sub: 'potential', color: '#059669' },
-    { label: 'Annual Savings', val: `$${SAMPLE_DATA.yearlySave}`, sub: 'potential', color: '#0f172a' },
+    { label: 'Monthly Savings', val: `$${data.monthlySave}`, sub: 'potential', color: '#059669' },
+    { label: 'Annual Savings', val: `$${data.yearlySave}`, sub: 'potential', color: '#0f172a' },
     { label: 'Total Findings', val: totalFindings.toString(), sub: 'across stack', color: '#0f172a' }
   ];
   const boxWidth = (contentWidth - 20) / 3; 
@@ -85,7 +60,7 @@ function generatePDF() {
 
   // --- 3. EXECUTIVE SUMMARY ---
   doc.font('Helvetica').fontSize(12).lineGap(6);
-  const summaryHeight = doc.heightOfString(SAMPLE_DATA.summary, { width: contentWidth - 40 });
+  const summaryHeight = doc.heightOfString(data.summary, { width: contentWidth - 40 });
   const sumBoxHeight = 16 + 14 + 10 + summaryHeight + 20; // Exact padded height
 
   checkPageBreak(sumBoxHeight);
@@ -96,14 +71,14 @@ function generatePDF() {
   doc.save().roundedRect(startX, sumY, contentWidth, sumBoxHeight, 8).clip().rect(startX, sumY, 4, sumBoxHeight).fill('#e2e8f0').restore(); 
   
   doc.font('Courier-Bold').fontSize(10).fillColor('#94a3b8').text('EXECUTIVE SUMMARY', startX + 20, sumY + 16);
-  doc.font('Helvetica').fontSize(12).fillColor('#334155').text(SAMPLE_DATA.summary, startX + 20, sumY + 40, { width: contentWidth - 40 });
+  doc.font('Helvetica').fontSize(12).fillColor('#334155').text(data.summary, startX + 20, sumY + 40, { width: contentWidth - 40 });
   doc.y = sumY + sumBoxHeight + 24;
 
   // --- 4. DETAILED FINDINGS ---
   doc.font('Courier-Bold').fontSize(10).fillColor('#94a3b8').text('DETAILED FINDINGS', startX, doc.y);
   doc.moveDown(1.5);
 
-  Object.entries(SAMPLE_DATA.findings).forEach(([toolName, findings]) => {
+  Object.entries(data.findings).forEach(([toolName, findings]) => {
     doc.font('Helvetica').fontSize(11).lineGap(4);
 
     // Step A: Calculate mathematically exact box height required
@@ -165,7 +140,7 @@ function generatePDF() {
   });
 
   // --- 5. VALUE BREAKDOWN ---
-  const breakdownItems = Object.entries(SAMPLE_DATA.maxSavingPerTool)
+  const breakdownItems = Object.entries(data.maxSavingPerTool)
     .filter(([_, saving]) => saving > 0)
     .sort((a, b) => b[1] - a[1]);
 
@@ -180,7 +155,7 @@ function generatePDF() {
   let currentY = bdY + 48;
 
   breakdownItems.forEach(([name, saving]) => {
-    const pct = Math.min(100, Math.round((saving / SAMPLE_DATA.monthlySave) * 100));
+    const pct = Math.min(100, Math.round((saving / data.monthlySave) * 100));
     const meta = TOOL_META[name] || { label: name, color: "#6366F1" };
 
     // Tool Name & Value text
@@ -210,12 +185,10 @@ function generatePDF() {
 
   // Footer Text
   doc.font('Courier').fontSize(11).fillColor('#94a3b8').text('Total Optimization Value', startX + 16, currentY);
-  const totalText = `-$${SAMPLE_DATA.monthlySave}/mo`;
+  const totalText = `-$${data.monthlySave}/mo`;
   doc.font('Courier-Bold').fontSize(14).fillColor('#059669')
      .text(totalText, startX + contentWidth - 16 - doc.widthOfString(totalText), currentY - 2);
 
   doc.end();
   console.log("Clean PDF generated successfully: audit_report.pdf");
 }
-
-generatePDF();
