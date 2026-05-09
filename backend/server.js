@@ -8,14 +8,24 @@ import { generatePDF } from "./pdf.js";
 import "dotenv/config"
 import { dirname } from "path";
 import { fileURLToPath } from "url";
+import { rateLimit } from 'express-rate-limit'
+
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const resend = new Resend(process.env.RESEND_API_KEY);
+
+const limiter = rateLimit({
+	windowMs: 15 * 60 * 1000,
+	limit: 100,
+    message : { error: 'Too many requests, please try again later.' }
+})
+
 
 const app = express()
 const PORT = 3000
 
 app.use(cors())
+app.use(limiter)
 app.use(express.json())
 
 
