@@ -1,4 +1,6 @@
+import { HumanMessage, SystemMessage } from "@langchain/core/messages"
 import { TOOLS } from "./data.js"
+import { model, systemPrompt } from "./llm.js"
 
 const INDIVIDUAL_PLAN = 3
 const teamPlans = ["team", "business", "team_premium", "teams"]
@@ -135,14 +137,22 @@ export async function audit_engine(input) {
 
     const monthlySave = Object.values(maxSavingPerTool).reduce((acc, el) => acc + el, 0)
 
-    // add the summary part here 
-    const summary = "for now make use of this"
-
-    return {
+    const output = {
         findings : obj,
         maxSavingPerTool,
-        summary,
         monthlySave,
-        yearlySave : Math.floor(monthlySave * 12) 
+        yearlySave : Math.floor(monthlySave * 12)
+    }
+
+    const llmOutput = await model.invoke([
+        new SystemMessage(systemPrompt),
+        new HumanMessage(output)
+    ])
+
+    const summary = llmOutput.data
+
+    return {
+        ...output,
+        summary
     }
 }
