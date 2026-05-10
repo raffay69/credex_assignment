@@ -20,7 +20,6 @@ You will receive structured JSON data containing:
 - cheaper plan recommendations
 - alternative provider suggestions
 - estimated monthly/yearly savings
-- overall savings summary
 
 Your task is to generate a polished markdown audit summary.
 
