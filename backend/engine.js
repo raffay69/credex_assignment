@@ -144,12 +144,31 @@ export async function audit_engine(input) {
         yearlySave : Math.floor(monthlySave * 12)
     }
 
-    const llmOutput = await model.invoke([
-        new SystemMessage(systemPrompt),
-        new HumanMessage(output)
-    ])
+    let summary = null
+    try{
+        const llmOutput = await model.invoke([
+            new SystemMessage(systemPrompt),
+            new HumanMessage(JSON.stringify(output))
+        ])
 
-    const summary = llmOutput.data
+        summary = llmOutput.data
+    }catch(e){
+        // fallback summary
+       summary = Object.entries(output.findings)
+        .map(([name, data]) => {
+            const bullets = data
+            .map((el) => `- **${el.type}**\n${el.reason}`)
+            .join("\n\n");
+
+            return [
+            `# **${name}**`,
+            `**Potential Savings:** **$${maxSavingPerTool[name]}/mo** (**$${maxSavingPerTool[name] * 12}/yr**)`,
+            bullets,
+            ].join("\n\n");
+        })
+        .join("\n\n---\n\n");
+    }
+
 
     return {
         ...output,

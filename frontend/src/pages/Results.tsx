@@ -1,170 +1,10 @@
 import axios from "axios";
-import { useState } from "react";
+import { useState, type Dispatch, type SetStateAction } from "react";
 import { BACKEND_URL, FRONTEND_URL } from "../constants";
 import toast from "react-hot-toast";
-
-const SAMPLE_DATA = {
-  findings: {
-    gemini: [
-      {
-        name: 'gemini',
-        type: 'overspend',
-        reason: 'the expected spend for pro/1 should be 20 not 35, check for hidden charges',
-        monthlySaving: 15,
-        annualSaving: 180
-      },
-      {
-        name: 'gemini',
-        type: 'cheaper-plan',
-        reason: 'Cheaper plans available like plus',
-        monthlySaving: 27,
-        annualSaving: 324
-      },
-      {
-        name: 'gemini',
-        type: 'alternatives',
-        reason: 'Cheaper alternative plans available',
-        alternatives: [
-          { name: 'chatgpt', planName: 'go', price: 8, saving: 27 },
-          { name: 'claude', planName: 'pro', price: 17, saving: 18 },
-          { name: 'chatgpt', planName: 'plus', price: 20, saving: 15 }
-        ],
-        monthlySaving: 27,
-        annualSaving: 324
-      }
-    ],
-    claude: [
-      {
-        name: 'claude',
-        type: 'wrong-plan',
-        reason: 'team at $20/seat ($40/mo) is overkill for 2 seat(s) — switch to pro at $17/seat ($34/mo)',
-        monthlySaving: 6,
-        annualSaving: 72
-      },
-      {
-        name: 'claude',
-        type: 'cheaper-plan',
-        reason: 'Cheaper plans available like pro',
-        monthlySaving: 6,
-        annualSaving: 72
-      },
-      {
-        name: 'claude',
-        type: 'alternatives',
-        reason: 'Cheaper alternative plans available',
-        alternatives: [
-          { name: 'chatgpt', planName: 'go', price: 8, saving: 24 },
-          { name: 'gemini', planName: 'plus', price: 8, saving: 24 }
-        ],
-        monthlySaving: 24,
-        annualSaving: 288
-      },
-      {
-        name: 'claude',
-        type: 'api-to-flat',
-        reason: 'Spending $150/mo on API — flat max_5x plan at $100/mo would be cheaper if usage is consistent',
-        monthlySaving: 50,
-        annualSaving: 600
-      },
-      {
-        name: 'claude',
-        type: 'alternatives',
-        reason: 'Cheaper alternative plans available',
-        alternatives: [
-          { name: 'chatgpt', planName: 'go', price: 8, saving: 142 },
-          { name: 'gemini', planName: 'plus', price: 8, saving: 142 },
-          { name: 'chatgpt', planName: 'plus', price: 20, saving: 130 },
-          { name: 'gemini', planName: 'pro', price: 20, saving: 130 },
-          {
-            name: 'chatgpt',
-            planName: 'pro_100',
-            price: 100,
-            saving: 50
-          }
-        ],
-        monthlySaving: 142,
-        annualSaving: 1704
-      }
-    ],
-    cursor: [
-      {
-        name: 'cursor',
-        type: 'cheaper-plan',
-        reason: 'Cheaper plans available like pro,pro_plus',
-        monthlySaving: 140,
-        annualSaving: 1680
-      },
-      {
-        name: 'cursor',
-        type: 'alternatives',
-        reason: 'Cheaper alternative plans available',
-        alternatives: [
-          { name: 'chatgpt', planName: 'go', price: 8, saving: 192 },
-          { name: 'copilot', planName: 'pro', price: 10, saving: 190 },
-          { name: 'claude', planName: 'pro', price: 17, saving: 183 },
-          { name: 'windsurf', planName: 'pro', price: 20, saving: 180 },
-          { name: 'chatgpt', planName: 'plus', price: 20, saving: 180 },
-          {
-            name: 'copilot',
-            planName: 'pro_plus',
-            price: 39,
-            saving: 161
-          },
-          {
-            name: 'claude',
-            planName: 'max_5x',
-            price: 100,
-            saving: 100
-          },
-          {
-            name: 'chatgpt',
-            planName: 'pro_100',
-            price: 100,
-            saving: 100
-          }
-        ],
-        monthlySaving: 192,
-        annualSaving: 2304
-      },
-      {
-        name: 'cursor',
-        type: 'alternatives',
-        reason: 'Cheaper alternative plans available',
-        alternatives: [
-          {
-            name: 'copilot',
-            planName: 'business',
-            price: 19,
-            saving: 168
-          },
-          { name: 'claude', planName: 'team', price: 20, saving: 160 },
-          {
-            name: 'chatgpt',
-            planName: 'business',
-            price: 25,
-            saving: 120
-          }
-        ],
-        monthlySaving: 168,
-        annualSaving: 2016
-      }
-    ],
-    chatgpt: [
-      {
-        name: 'chatgpt',
-        type: 'api-use-credits',
-        reason: 'API spend of $6/mo is low — prepaid credits would be more cost effective than any flat plan',
-        monthlySaving: 0,
-        annualSaving: 0
-      }
-    ]
-  },
-  maxSavingPerTool: { gemini: 27, claude: 142, cursor: 192, chatgpt: 0 },
-  summary : "will be added later ok haan",
-  monthlySave: 361,
-  id : "12344",
-  yearlySave: 4332
-}
+import type { AuditData } from "./Share";
+import Markdown from 'react-markdown'
+import remarkGfm from "remark-gfm";
 
 const TOOL_META = {
   gemini:    { label: "Gemini",        color: "#4285F4", logo: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/google-gemini.png" },
@@ -391,8 +231,9 @@ function ShareSection({ onShare, copied }) {
   );
 }
 
-export default function AuditResults({ data = SAMPLE_DATA, setState }) {
-  const { findings, maxSavingPerTool, monthlySave, yearlySave, summary  , id } = data;
+
+export default function AuditResults({ data , setState } : {data : AuditData , setState : Dispatch<SetStateAction<string>>}) {
+  const { findings, maxSavingPerTool, monthlySave, yearlySave, summary , id } = data;
   const [copied, setCopied] = useState(false);
   const [email , setEmail] = useState()
   const [sendingEmail , setSendingEmail ] = useState(false)
@@ -487,8 +328,38 @@ export default function AuditResults({ data = SAMPLE_DATA, setState }) {
         {summary && (
           <div className="bg-white border border-slate-200 rounded-xl p-[18px] mb-3 shadow-sm">
             <p className="text-[10px] font-bold tracking-[0.09em] uppercase text-slate-400 m-0 mb-2 font-mono">Summary</p>
-            <p className="text-[13px] text-slate-700 leading-[1.7] m-0">{summary}</p>
-          </div>
+            <Markdown 
+              remarkPlugins={[remarkGfm]}
+              components={{
+                table: ({ node, ...props }) => (
+                  <div className="overflow-x-auto my-3">
+                    <table
+                      className="w-full border-collapse text-sm"
+                      {...props}
+                    />
+                  </div>
+                ),
+
+                th: ({ node, ...props }) => (
+                  <th
+                    className="border border-zinc-700 px-3 py-2 text-left font-medium"
+                    {...props}
+                  />
+                ),
+
+                td: ({ node, ...props }) => (
+                  <td
+                    className="border border-zinc-700 px-3 py-2"
+                    {...props}
+                  />
+                ),
+
+                tr: ({ node, ...props }) => (
+                  <tr className="align-top" {...props} />
+                ),
+              }}
+              >{summary}</Markdown>
+          </div> 
         )}
 
         {/* 4. Per-tool finding cards */}

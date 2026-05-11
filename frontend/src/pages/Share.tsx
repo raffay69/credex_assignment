@@ -10,34 +10,9 @@ export interface AuditData {
   summary: string;
   monthlySave: number;
   yearlySave: number;
+  id?: string
 }
 
-const SAMPLE_DATA: AuditData = {
-  findings: {
-    gemini: [
-      { name: 'gemini', type: 'overspend', reason: 'the expected spend for pro/1 should be 20 not 35, check for hidden charges', monthlySaving: 15, annualSaving: 180 },
-      { name: 'gemini', type: 'cheaper-plan', reason: 'Cheaper plans available like plus', monthlySaving: 27, annualSaving: 324 },
-      { name: 'gemini', type: 'alternatives', reason: 'Cheaper alternative plans available', alternatives: [{ name: 'chatgpt', planName: 'go', price: 8, saving: 27 }, { name: 'claude', planName: 'pro', price: 17, saving: 18 }, { name: 'chatgpt', planName: 'plus', price: 20, saving: 15 }], monthlySaving: 27, annualSaving: 324 }
-    ],
-    claude: [
-      { name: 'claude', type: 'wrong-plan', reason: 'team at $20/seat ($40/mo) is overkill for 2 seat(s) — switch to pro at $17/seat ($34/mo)', monthlySaving: 6, annualSaving: 72 },
-      { name: 'claude', type: 'api-to-flat', reason: 'Spending $150/mo on API — flat max_5x plan at $100/mo would be cheaper if usage is consistent', monthlySaving: 50, annualSaving: 600 },
-      { name: 'claude', type: 'alternatives', reason: 'Cheaper alternative plans available', alternatives: [{ name: 'chatgpt', planName: 'go', price: 8, saving: 142 }, { name: 'gemini', planName: 'plus', price: 8, saving: 142 }], monthlySaving: 142, annualSaving: 1704 }
-    ],
-    cursor: [
-      { name: 'cursor', type: 'cheaper-plan', reason: 'Cheaper plans available like pro, pro_plus', monthlySaving: 140, annualSaving: 1680 },
-    ],
-    chatgpt: [
-      { name: 'chatgpt', type: 'api-use-credits', reason: 'API spend of $6/mo is low — prepaid credits would be more cost effective than any flat plan', monthlySaving: 0, annualSaving: 0 }
-    ]
-  },
-  maxSavingPerTool: { gemini: 27, claude: 142, cursor: 140, chatgpt: 0 },
-  summary : "This team is overpaying across multiple vendors. Consolidating API usage to flat tiers and switching under-utilized Team plans to Pro plans yields significant monthly returns.",
-  monthlySave: 309,
-  yearlySave: 3708
-};
-
-// --- Config ---
 const TOOL_META: Record<string, { label: string; color: string; logo: string }> = {
   gemini:    { label: "Gemini",        color: "#4285F4", logo: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/google-gemini.png" },
   claude:    { label: "Claude",        color: "#D97706", logo: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/claude-ai.svg" },
