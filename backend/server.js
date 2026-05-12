@@ -30,78 +30,95 @@ app.use(express.json())
 
 
 app.post("/audit" , async (req , res)=>{
-    const { data } = req.body
-    const response = await audit_engine(data)
-    const saved = await prisma.audits.create({
-        data : {
-            content : JSON.stringify(response)
-        }
-    })
-    const finalRespone = { ...response , id : saved.id }    
-    res.json(finalRespone).status(200)
+    try{
+        const { data } = req.body
+        const response = await audit_engine(data)
+        const saved = await prisma.audits.create({
+            data : {
+                content : JSON.stringify(response)
+            }
+        })
+        const finalRespone = { ...response , id : saved.id }    
+        return res.status(200).json(finalRespone)
+    }catch(e){
+        console.log(e.message)
+        return res.status(500).json({error : e.message})
+    }
+   
 })
 
 app.post("/share" , async(req , res)=>{
-    const { id } = req.body
-    const data = await prisma.audits.findFirst({
-        where : {
-            id : id
-        }
-    })
-    res.json(JSON.parse(data.content)).status(200)  
+    try{
+        const { id } = req.body
+        const data = await prisma.audits.findFirst({
+            where : {
+                id : id
+            }
+        })
+        return res.status(200).json(JSON.parse(data.content))  
+    }catch(e){
+        console.log(e.message)
+        return res.status(500).json({error : e.message})
+    }
+    
 })
 
 
 app.post("/email" , async (req , res)=>{
-    const { email , id } = req.body
-    // store the email in db
-    await prisma.emails.createMany({
-        data : [{
-            email
-        }],
-        skipDuplicates : true
-    })
-    const rawData = await prisma.audits.findFirst({
-        where : {
-            id
-        }
-    })
-    const data = JSON.parse(rawData.content)
-    // generate the pdf
-    generatePDF(data)
+    try{
+        const { email , id } = req.body
+        // store the email in db
+        await prisma.emails.createMany({
+            data : [{
+                email
+            }],
+            skipDuplicates : true
+        })
+        const rawData = await prisma.audits.findFirst({
+            where : {
+                id
+            }
+        })
+        const data = JSON.parse(rawData.content)
+        // generate the pdf
+        generatePDF(data)
 
-    await new Promise(res=>setTimeout(res , 2000)) // 2 sec timeout to make sure file is generated properly
-    // send the email using resend
-    const filepath = `${__dirname}/audit_report.pdf`;
-    const attachment = fs.readFileSync(filepath).toString('base64');
+        await new Promise(res=>setTimeout(res , 2000)) // 2 sec timeout to make sure file is generated properly
+        // send the email using resend
+        const filepath = `${__dirname}/audit_report.pdf`;
+        const attachment = fs.readFileSync(filepath).toString('base64');
 
-    await resend.emails.send({
-    from: 'Credex <onboarding@resend.dev>',
-    to: [email],
-    subject: `We found $${data.monthlySave}/mo in potential savings`,
-    html: `<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #334155; line-height: 1.6; max-w-2xl; margin: 0 auto;">
-            <p>Hi,</p>
-            
-            <p>Thank you for requesting an audit. Your personalized stack optimization report is attached.</p>
-            
-            <p>We noticed some significant high-savings opportunities in your results. To ensure you get the most out of this data, a member of the Credex team will follow up soon to help you map out an optimization strategy.</p>
+        await resend.emails.send({
+        from: 'Credex <onboarding@resend.dev>',
+        to: [email],
+        subject: `We found $${data.monthlySave}/mo in potential savings`,
+        html: `<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #334155; line-height: 1.6; max-w-2xl; margin: 0 auto;">
+                <p>Hi,</p>
+                
+                <p>Thank you for requesting an audit. Your personalized stack optimization report is attached.</p>
+                
+                <p>We noticed some significant high-savings opportunities in your results. To ensure you get the most out of this data, a member of the Credex team will follow up soon to help you map out an optimization strategy.</p>
 
-            <p>Please review the attached PDF, and we'll be in touch shortly!</p>
+                <p>Please review the attached PDF, and we'll be in touch shortly!</p>
 
-            <p>Cheers,<br>
-            <strong>The Credex Team</strong></p>
-            </div>`,
-    attachments: [
-        {
-        content: attachment,
-        filename: 'audit_report.pdf',
-        },
-    ],
-    });
-    // delete the local file
-    fs.unlinkSync(filepath)
+                <p>Cheers,<br>
+                <strong>The Credex Team</strong></p>
+                </div>`,
+        attachments: [
+            {
+            content: attachment,
+            filename: 'audit_report.pdf',
+            },
+        ],
+        });
+        // delete the local file
+        fs.unlinkSync(filepath)
 
-    res.sendStatus(200)
+        return res.sendStatus(200)
+    }catch(e){
+        console.log(e.message)
+        return res.status(500).json({error : e.message})
+    }
 })
 
 
