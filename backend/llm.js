@@ -72,5 +72,5 @@ GOOD OUTPUT EXAMPLE:
 }
 
 TARGET LENGTH:
-~150 words depending on input size.
+~100 - 200 words depending on input size.
 `;

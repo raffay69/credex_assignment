@@ -1,6 +1,8 @@
 import axios from "axios";
 import { useState, useEffect } from "react";
+import Markdown from "react-markdown";
 import { useParams } from "react-router";
+import remarkGfm from "remark-gfm";
 
 export interface AltPlan { name: string; planName: string; price: number; saving: number; }
 export interface Finding { name: string; type: string; reason: string; monthlySaving: number; annualSaving: number; alternatives?: AltPlan[]; }
@@ -249,9 +251,38 @@ export default function SharedAuditView() {
             {/* 2. Summary */}
             {data.summary && (
               <div className="bg-white border border-slate-200 rounded-xl p-[20px] mb-4 shadow-sm relative overflow-hidden">
-                <div className="absolute left-0 top-0 bottom-0 w-1 bg-slate-200" />
-                <p className="text-[10px] font-bold tracking-[0.09em] uppercase text-slate-400 m-0 mb-2 font-mono ml-2">Executive Summary</p>
-                <p className="text-[13px] text-slate-700 leading-[1.7] m-0 ml-2">{data.summary}</p>
+                <p className="text-[10px] font-bold tracking-[0.09em] uppercase text-slate-400 m-0 mb-2 font-mono ml-2">Summary</p>
+                <Markdown 
+                  remarkPlugins={[remarkGfm]}
+                  components={{
+                    table: ({ node, ...props }) => (
+                      <div className="overflow-x-auto my-3">
+                        <table
+                          className="w-full border-collapse text-sm"
+                          {...props}
+                        />
+                      </div>
+                    ),
+    
+                    th: ({ node, ...props }) => (
+                      <th
+                        className="border border-zinc-700 px-3 py-2 text-left font-medium"
+                        {...props}
+                      />
+                    ),
+    
+                    td: ({ node, ...props }) => (
+                      <td
+                        className="border border-zinc-700 px-3 py-2"
+                        {...props}
+                      />
+                    ),
+    
+                    tr: ({ node, ...props }) => (
+                      <tr className="align-top" {...props} />
+                    ),
+                  }}
+                  >{data.summary}</Markdown>
               </div>
             )}
 

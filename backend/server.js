@@ -55,10 +55,11 @@ app.post("/share" , async(req , res)=>{
 app.post("/email" , async (req , res)=>{
     const { email , id } = req.body
     // store the email in db
-    await prisma.emails.create({
-        data : {
+    await prisma.emails.createMany({
+        data : [{
             email
-        }
+        }],
+        skipDuplicates : true
     })
     const rawData = await prisma.audits.findFirst({
         where : {
@@ -68,6 +69,8 @@ app.post("/email" , async (req , res)=>{
     const data = JSON.parse(rawData.content)
     // generate the pdf
     generatePDF(data)
+
+    await new Promise(res=>setTimeout(res , 2000)) // 2 sec timeout to make sure file is generated properly
     // send the email using resend
     const filepath = `${__dirname}/audit_report.pdf`;
     const attachment = fs.readFileSync(filepath).toString('base64');

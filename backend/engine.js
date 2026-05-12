@@ -157,7 +157,7 @@ export async function audit_engine(input) {
        summary = Object.entries(output.findings)
         .map(([name, data]) => {
             const bullets = data
-            .map((el) => `- **${el.type}**\n${el.reason}`)
+            .map((el) => `- **${el.type}**: \n${el.reason}`)
             .join("\n\n");
 
             return [
