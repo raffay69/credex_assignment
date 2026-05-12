@@ -7,20 +7,20 @@ on:
 
 jobs:
   test:
-    run-on: ubuntu-latest
-  steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Setup Node
-      uses: actions/setup-node@v4
-      with:
-        node-version: 20
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
 
-    - name: Install dependencies
-      working-directory: backend
-      run: npm install
+      - name: Install dependencies
+        working-directory: backend
+        run: npm install
 
-    - name: Run tests
-      working-directory: backend
-      run: npm run test
+      - name: Run tests
+        working-directory: backend
+        run: npm run test
