@@ -47,7 +47,7 @@ export interface OutputPayload {
 const TOOLS_CONFIG: Record<string, ToolConfig> = {
   chatgpt: { 
     label: "ChatGPT",       
-    plans: ["Free", "Go", "Plus", "Pro 100", "Pro 200", "Business", "API Direct"] 
+    plans: ["Free", "Go", "Plus", "Pro","Business", "API Direct"] 
   },
   claude: { 
     label: "Claude",        

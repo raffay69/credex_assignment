@@ -7,6 +7,7 @@ const teamPlans = ["team", "business", "team_premium", "teams"]
 
 export async function audit_engine(input) {
     const tools = input.tools
+    if(!Array.isArray(tools)) throw Error("invalid input structure")
     const findings = []
     let expectedSpend = null
 
