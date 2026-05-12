@@ -8,6 +8,8 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      GROQ_API_KEY: "dummy_for_tests"
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
