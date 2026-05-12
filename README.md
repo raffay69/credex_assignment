@@ -8,7 +8,9 @@ A web-based SaaS spend auditor that analyzes your team's tool stack and surfaces
 
 ## Screenshots
 
-> _Add 3 screenshots or a Loom/YouTube link here before submission._
+![alt text](image.png)
+![alt text](image-1.png)
+![alt text](image-2.png)
 
 ---
 

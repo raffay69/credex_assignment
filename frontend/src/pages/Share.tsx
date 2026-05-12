@@ -1,5 +1,6 @@
 import axios from "axios";
 import { useState, useEffect } from "react";
+import toast from "react-hot-toast";
 import Markdown from "react-markdown";
 import { useParams } from "react-router";
 import remarkGfm from "remark-gfm";
@@ -187,23 +188,24 @@ export default function SharedAuditView() {
   const params = useParams()
 
   useEffect(() => {
-    const auditId = params.id;
+    fetchDataUsingId()
+  }, []);
 
-    // 2. Dummy API Call
-    console.log(`Fetching public audit data for ID: ${auditId}`);
-    
-    const fetchDummyData = async () => {
-    //   await new Promise(resolve => setTimeout(resolve, 1500));
+  async function fetchDataUsingId(){
+    try{
+      const auditId = params.id;
       const res = await axios.post("http://localhost:3000/share" , {
-        id : auditId
+            id : auditId
       })
       setData(res.data);
-    // setData(SAMPLE_DATA)
-      setLoading(false);
-    };
-
-    fetchDummyData();
-  }, []);
+    }catch(e){
+      toast.error(e.message, {
+            className: "bg-slate-900 text-slate-50 border border-slate-800 font-bold text-[13px] shadow-sm"
+        });
+    } finally{
+      setLoading(false)
+    }
+  }
 
   return (
     <div className="bg-slate-50 min-h-screen font-sans">
