@@ -2,8 +2,8 @@ name: Github actions
 
 on:
   push:
-    paths:
-      - "backend/**"
+    branches:
+      - main
 
 jobs:
   test:
