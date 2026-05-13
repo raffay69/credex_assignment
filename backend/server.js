@@ -32,9 +32,7 @@ app.use(express.json())
 app.post("/audit" , async (req , res)=>{
     try{
         const { data } = req.body
-        console.log(data)
         const response = await audit_engine(data)
-        console.log(response)
         const saved = await prisma.audits.create({
             data : {
                 content : JSON.stringify(response)
