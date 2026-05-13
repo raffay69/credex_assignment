@@ -4,6 +4,8 @@ A web-based SaaS spend auditor that analyzes your team's tool stack and surfaces
 
 **Deployed URL:** https://credex-assignment-1-2rgi.onrender.com
 
+> **⚠️ Important Note:** The backend is hosted on a Render free instance. If the app feels unresponsive, please wait 30–60 seconds for the server to "wake up" on the first request.
+
 ---
 
 ## Screenshots
