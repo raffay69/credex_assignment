@@ -2,7 +2,7 @@
 
 A web-based SaaS spend auditor that analyzes your team's tool stack and surfaces overspending, wrong plans, and cheaper alternatives — delivering findings as an AI-written summary with a downloadable PDF report. Built for Credex as a lead-generation and consultation-booking engine targeting early-stage startups and scale-ups.
 
-**Deployed URL:** https://credex-assignment.vercel.app
+**Deployed URL:** https://credex-assignment-1-2rgi.onrender.com
 
 ---
 
