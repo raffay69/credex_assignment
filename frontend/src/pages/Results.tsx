@@ -5,8 +5,38 @@ import toast from "react-hot-toast";
 import type { AuditData } from "./Share";
 import Markdown from 'react-markdown'
 import remarkGfm from "remark-gfm";
+import type { Components } from "react-markdown";
 
-const TOOL_META = {
+// --- Types ---
+
+interface ToolMeta {
+  label: string;
+  color?: string;
+  logo?: string;
+}
+
+interface FindingConfig {
+  label: string;
+  color: string;
+}
+
+interface Alternative {
+  name: string;
+  planName: string;
+  saving: number;
+}
+
+interface Finding {
+  type: string;
+  reason: string;
+  alternatives?: Alternative[];
+  monthlySaving: number;
+  annualSaving: number;
+}
+
+// ---
+
+const TOOL_META: Record<string, ToolMeta> = {
   gemini:    { label: "Gemini",        color: "#4285F4", logo: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/google-gemini.png" },
   claude:    { label: "Claude",        color: "#D97706", logo: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/claude-ai.svg" },
   chatgpt:   { label: "ChatGPT",       color: "#10A37F", logo: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/chatgpt.png" },
@@ -15,7 +45,7 @@ const TOOL_META = {
   windsurf:  { label: "Windsurf",      color: "#06B6D4", logo: "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-png@latest/light/windsurf.png" }
 };
 
-const FINDING_CONFIG = {
+const FINDING_CONFIG: Record<string, FindingConfig> = {
   "overspend":       { label: "Billing Anomaly", color: "#EF4444" },
   "wrong-plan":      { label: "Wrong Plan",      color: "#F59E0B" },
   "cheaper-plan":    { label: "Cheaper Plan",    color: "#3B82F6" },
@@ -24,7 +54,8 @@ const FINDING_CONFIG = {
   "api-use-credits": { label: "Use Credits",     color: "#8B5CF6" },
 };
 
-function ToolAvatar({ name, size = 36 }) {
+
+function ToolAvatar({ name, size = 36 }: { name: string; size?: number }) {
   const meta = TOOL_META[name] || { label: name, logo: "/logos/default.svg" };
 
   return (
@@ -41,7 +72,7 @@ function ToolAvatar({ name, size = 36 }) {
   );
 }
 
-function Badge({ type }) {
+function Badge({ type }: { type: string }) {
   const cfg = FINDING_CONFIG[type] || { label: type, color: "#64748B" };
   return (
     <span 
@@ -55,7 +86,7 @@ function Badge({ type }) {
   );
 }
 
-function AltPill({ alt }) {
+function AltPill({ alt }: { alt: Alternative }) {
   const meta = TOOL_META[alt.name] || { label: alt.name, logo: "/logos/default.svg" };
   
   return (
@@ -74,7 +105,7 @@ function AltPill({ alt }) {
   );
 }
 
-function FindingRow({ finding, isLast }) {
+function FindingRow({ finding, isLast }: { finding: Finding; isLast: boolean }) {
   return (
     <div className={`py-3.5 px-5 ${isLast ? '' : 'border-b border-slate-50'}`}>
       <div className="flex gap-3 items-start flex-wrap">
@@ -83,7 +114,7 @@ function FindingRow({ finding, isLast }) {
         </div>
         <div className="flex-1 min-w-[180px]">
           <p className="text-[13px] text-slate-700 leading-relaxed m-0">{finding.reason}</p>
-          {finding.alternatives?.length > 0 && (
+          {finding.alternatives && finding.alternatives.length > 0 && (
             <div className="flex flex-wrap gap-1.5 mt-2.5">
               {finding.alternatives.map((alt, i) => <AltPill key={i} alt={alt} />)}
             </div>
@@ -98,7 +129,7 @@ function FindingRow({ finding, isLast }) {
   );
 }
 
-function ToolCard({ toolName, findings, maxSaving }) {
+function ToolCard({ toolName, findings, maxSaving }: { toolName: string; findings: Finding[]; maxSaving: number }) {
   const [open, setOpen] = useState(true);
   const meta = TOOL_META[toolName] || { label: toolName, color: "#6366F1" };
   return (
@@ -128,7 +159,7 @@ function ToolCard({ toolName, findings, maxSaving }) {
   );
 }
 
-function CredexBanner({ monthlySave }) {
+function CredexBanner({ monthlySave }: { monthlySave: number }) {
   return (
     <div className="bg-slate-900 rounded-xl py-5 px-6 mb-3 border border-slate-800">
       <div className="flex items-center gap-1.5 mb-2.5">
@@ -145,7 +176,7 @@ function CredexBanner({ monthlySave }) {
             We negotiate vendor credits, consolidate overlapping tools, and identify free-tier alternatives — going well beyond plan switching.
           </p>
         </div>
-        <a  href="https://credex.rocks/" target="_blank" className="bg-emerald-400 text-slate-900 border-none rounded-lg py-2.5 px-[18px] font-bold text-[13px] cursor-pointer whitespace-nowrap self-center shrink-0 hover:bg-emerald-300 transition-colors">
+        <a  href="https://credex.rocks/" target="_blank" rel="noreferrer" className="bg-emerald-400 text-slate-900 border-none rounded-lg py-2.5 px-[18px] font-bold text-[13px] cursor-pointer whitespace-nowrap self-center shrink-0 hover:bg-emerald-300 transition-colors">
           Get an Audit →
         </a>
       </div>
@@ -165,7 +196,15 @@ function OptimalBanner() {
   );
 }
 
-function EmailCapture({ setEmail, handleEmailReport, sendingEmail }) {
+function EmailCapture({ 
+  setEmail, 
+  handleEmailReport, 
+  sendingEmail 
+}: { 
+  setEmail: (val: string) => void;
+  handleEmailReport: () => void;
+  sendingEmail: boolean;
+}) {
   return (
     <div className="bg-slate-900 rounded-xl p-[22px] border border-slate-800 mb-3">
       <p className="font-bold text-base text-slate-50 m-0 mb-1">
@@ -206,7 +245,7 @@ function EmailCapture({ setEmail, handleEmailReport, sendingEmail }) {
   );
 }
 
-function ShareSection({ onShare, copied }) {
+function ShareSection({ onShare, copied }: { onShare: () => void; copied: boolean }) {
   return (
     <div className="bg-slate-900 rounded-xl p-[22px] border border-slate-800 flex items-center justify-between flex-wrap gap-4 mb-3">
       <div>
@@ -231,15 +270,31 @@ function ShareSection({ onShare, copied }) {
   );
 }
 
+const markdownComponents: Components = {
+  table: ({ node: _node, ...props }) => (
+    <div className="overflow-x-auto my-3">
+      <table className="w-full border-collapse text-sm" {...props} />
+    </div>
+  ),
+  th: ({ node: _node, ...props }) => (
+    <th className="border border-zinc-700 px-3 py-2 text-left font-medium" {...props} />
+  ),
+  td: ({ node: _node, ...props }) => (
+    <td className="border border-zinc-700 px-3 py-2" {...props} />
+  ),
+  tr: ({ node: _node, ...props }) => (
+    <tr className="align-top" {...props} />
+  ),
+};
 
 export default function AuditResults({ data , setState } : {data : AuditData , setState : Dispatch<SetStateAction<string>>}) {
   const { findings, maxSavingPerTool, monthlySave, yearlySave, summary , id } = data;
   const [copied, setCopied] = useState(false);
-  const [email , setEmail] = useState()
-  const [sendingEmail , setSendingEmail ] = useState(false)
+  const [email, setEmail] = useState<string>("");
+  const [sendingEmail, setSendingEmail] = useState(false);
 
   const toolCount = Object.keys(findings).length;
-  const findingCount = Object.values(findings).reduce((s, f) => s + f.length, 0);
+  const findingCount = Object.values(findings).reduce((s: number, f: Finding[]) => s + f.length, 0);
   const isOptimal = findingCount === 0 || monthlySave === 0;
   const isHighSaving = monthlySave > 500;
 
@@ -251,9 +306,9 @@ export default function AuditResults({ data , setState } : {data : AuditData , s
     ? `${toolCount} tool${toolCount !== 1 ? "s" : ""} audited · no major issues found`
     : `${toolCount} tool${toolCount !== 1 ? "s" : ""} audited · ${findingCount} finding${findingCount !== 1 ? "s" : ""} · $${yearlySave}/yr potential`;
 
-  const handleShare = async (id : string) => {
+  const handleShare = async (shareId: string) => {
     try {
-      await navigator.clipboard.writeText(`${FRONTEND_URL}/share/${id}`);
+      await navigator.clipboard.writeText(`${FRONTEND_URL}/share/${shareId}`);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
@@ -261,27 +316,26 @@ export default function AuditResults({ data , setState } : {data : AuditData , s
     }
   };
 
-  const handleEmailReport = async()=>{
-    try{
-        setSendingEmail(true)
-        const res = await axios.post(`${BACKEND_URL}/email` , {
-            email, id
-        })
-        if(res.status === 200){
-            toast.success("Email Sent Successfully", {
-            className: "bg-slate-900 text-slate-50 border border-slate-800 font-bold text-[13px] shadow-sm",
-            duration : 2000
+  const handleEmailReport = async () => {
+    try {
+      setSendingEmail(true);
+      const res = await axios.post(`${BACKEND_URL}/email`, { email, id });
+      if (res.status === 200) {
+        toast.success("Email Sent Successfully", {
+          className: "bg-slate-900 text-slate-50 border border-slate-800 font-bold text-[13px] shadow-sm",
+          duration: 2000
         });
-        }
-    } catch(e){
-        toast.error(e.message, {
-            className: "bg-slate-900 text-slate-50 border border-slate-800 font-bold text-[13px] shadow-sm",
-            duration : 2000
-        });
+      }
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "An unexpected error occurred";
+      toast.error(message, {
+        className: "bg-slate-900 text-slate-50 border border-slate-800 font-bold text-[13px] shadow-sm",
+        duration: 2000
+      });
     } finally {
-        setSendingEmail(false)
+      setSendingEmail(false);
     }
-  }
+  };
 
   return (
     <div className="bg-slate-50 min-h-screen pt-8 px-4 pb-16 font-sans">
@@ -328,37 +382,9 @@ export default function AuditResults({ data , setState } : {data : AuditData , s
         {summary && (
           <div className="bg-white border border-slate-200 rounded-xl p-[18px] mb-3 shadow-sm">
             <p className="text-[10px] font-bold tracking-[0.09em] uppercase text-slate-400 m-0 mb-2 font-mono">Summary</p>
-            <Markdown 
-              remarkPlugins={[remarkGfm]}
-              components={{
-                table: ({ node, ...props }) => (
-                  <div className="overflow-x-auto my-3">
-                    <table
-                      className="w-full border-collapse text-sm"
-                      {...props}
-                    />
-                  </div>
-                ),
-
-                th: ({ node, ...props }) => (
-                  <th
-                    className="border border-zinc-700 px-3 py-2 text-left font-medium"
-                    {...props}
-                  />
-                ),
-
-                td: ({ node, ...props }) => (
-                  <td
-                    className="border border-zinc-700 px-3 py-2"
-                    {...props}
-                  />
-                ),
-
-                tr: ({ node, ...props }) => (
-                  <tr className="align-top" {...props} />
-                ),
-              }}
-              >{summary}</Markdown>
+            <Markdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+              {summary}
+            </Markdown>
           </div> 
         )}
 
@@ -366,7 +392,7 @@ export default function AuditResults({ data , setState } : {data : AuditData , s
         <div className="mb-3">
           <p className="text-[10px] font-bold tracking-[0.09em] uppercase text-slate-400 m-0 mb-2.5 font-mono">Per-tool breakdown</p>
           {Object.entries(findings).map(([toolName, toolFindings]) => (
-            <ToolCard key={toolName} toolName={toolName} findings={toolFindings} maxSaving={maxSavingPerTool[toolName] || 0} />
+            <ToolCard key={toolName} toolName={toolName} findings={toolFindings as Finding[]} maxSaving={maxSavingPerTool[toolName] || 0} />
           ))}
         </div>
 
@@ -374,7 +400,7 @@ export default function AuditResults({ data , setState } : {data : AuditData , s
         <div className="bg-white border border-slate-200 rounded-xl p-[18px] mb-3 shadow-sm">
           <p className="text-[10px] font-bold tracking-[0.09em] uppercase text-slate-400 m-0 mb-[14px] font-mono">Savings Breakdown</p>
           {Object.entries(maxSavingPerTool).map(([name, saving]) => {
-            const pct = Math.min(100, Math.round((saving / monthlySave) * 100));
+            const pct = Math.min(100, Math.round(((saving as number) / monthlySave) * 100));
             const meta = TOOL_META[name] || { label: name, color: "#6366F1" };
             return (
               <div key={name} className="flex items-center gap-2.5 mb-2.5">
@@ -385,7 +411,7 @@ export default function AuditResults({ data , setState } : {data : AuditData , s
                     <span className="text-xs font-mono text-emerald-600 font-semibold">−${saving}/mo</span>
                   </div>
                   <div className="h-[3px] rounded-sm bg-slate-100">
-                    <div className="h-full rounded-sm" style={{ width: `${pct}%`, backgroundColor: meta.color + "80" }} />
+                    <div className="h-full rounded-sm" style={{ width: `${pct}%`, backgroundColor: (meta.color ?? "#6366F1") + "80" }} />
                   </div>
                 </div>
               </div>
@@ -401,7 +427,7 @@ export default function AuditResults({ data , setState } : {data : AuditData , s
         <EmailCapture setEmail={setEmail} handleEmailReport={handleEmailReport} sendingEmail={sendingEmail}/>
 
         {/* 7. Dedicated Share Section */}
-        <ShareSection onShare={()=>handleShare(id)} copied={copied} />
+        <ShareSection onShare={() => handleShare(id!)} copied={copied} />
 
       </div>
     </div>

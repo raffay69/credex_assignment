@@ -8,7 +8,7 @@ function Home() {
 
   return (
     <>
-    {state === "form" ? <AuditForm setState={setState} setData={setData} /> : <AuditResults setState={setState} data={data}/> }
+    {state === "form" ? <AuditForm setState={setState} setData={setData} /> :  <AuditResults data={data!} setState={setState}/> }
     </>
   )
 }

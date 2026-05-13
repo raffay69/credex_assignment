@@ -4,6 +4,7 @@ import toast from "react-hot-toast";
 import Markdown from "react-markdown";
 import { useParams } from "react-router";
 import remarkGfm from "remark-gfm";
+import { BACKEND_URL } from "../constants";
 
 export interface AltPlan { name: string; planName: string; price: number; saving: number; }
 export interface Finding { name: string; type: string; reason: string; monthlySaving: number; annualSaving: number; alternatives?: AltPlan[]; }
@@ -194,12 +195,13 @@ export default function SharedAuditView() {
   async function fetchDataUsingId(){
     try{
       const auditId = params.id;
-      const res = await axios.post("http://localhost:3000/share" , {
+      const res = await axios.post(`${BACKEND_URL}/share` , {
             id : auditId
       })
       setData(res.data);
-    }catch(e){
-      toast.error(e.message, {
+    }catch(e : unknown){
+      const message = e instanceof Error ? e.message : "An unexpected error occurred";
+      toast.error(message, {
             className: "bg-slate-900 text-slate-50 border border-slate-800 font-bold text-[13px] shadow-sm"
         });
     } finally{

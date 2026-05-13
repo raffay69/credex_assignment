@@ -1,6 +1,7 @@
 import axios from "axios";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, type SetStateAction } from "react";
 import toast from "react-hot-toast";
+import { BACKEND_URL } from "../constants";
 
 // --- Types & Interfaces ---
 
@@ -81,7 +82,7 @@ const DEFAULT_STATE: AuditFormData = {
 };
 
 
-function Label({ children, ...props }) {
+function Label({ children, ...props }: React.LabelHTMLAttributes<HTMLLabelElement>) {
   return (
     <label className="block text-[10px] font-bold tracking-[0.09em] uppercase text-slate-400 mb-1.5 font-mono" {...props}>
       {children}
@@ -89,7 +90,7 @@ function Label({ children, ...props }) {
   );
 }
 
-function Input({ ...props }) {
+function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
   return (
     <input 
       className="w-full py-[9px] px-[13px] border border-slate-200 rounded-lg text-[13px] text-slate-900 outline-none bg-neutral-50 focus:border-slate-400 focus:bg-white transition-colors placeholder:text-slate-400 disabled:opacity-50 disabled:bg-slate-100"
@@ -98,7 +99,7 @@ function Input({ ...props }) {
   );
 }
 
-function Select({ children, ...props }) {
+function Select({ children, ...props }: React.SelectHTMLAttributes<HTMLSelectElement>) {
   return (
     <select 
       className="w-full py-[9px] px-[13px] border border-slate-200 rounded-lg text-[13px] text-slate-900 outline-none bg-neutral-50 focus:border-slate-400 focus:bg-white transition-colors appearance-none cursor-pointer disabled:opacity-50 disabled:bg-slate-100"
@@ -110,7 +111,7 @@ function Select({ children, ...props }) {
 }
 
 
-export default function AuditForm({ setState , setData }) {
+export default function AuditForm({ setState , setData } : { setState : React.Dispatch<SetStateAction<string>> , setData : React.Dispatch<SetStateAction<any>>}) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<AuditFormData>(() => {
     if (typeof window !== "undefined") {
@@ -187,7 +188,7 @@ export default function AuditForm({ setState , setData }) {
         }))
         };
         
-        const res = await axios.post("http://localhost:3000/audit" , {
+        const res = await axios.post(`${BACKEND_URL}/audit` , {
             data : payload
         })
 
@@ -196,8 +197,10 @@ export default function AuditForm({ setState , setData }) {
         setFormData(DEFAULT_STATE);
         localStorage.removeItem("ai-stack-audit");
         setState("results");
-    }catch(e){
-        toast.error(e.message, {
+
+      }catch(e: unknown){
+        const message = e instanceof Error ? e.message : "An unexpected error occurred";
+        toast.error(message, {
             className: "bg-slate-900 text-slate-50 border border-slate-800 font-bold text-[13px] shadow-sm",
             duration : 2000
         });
