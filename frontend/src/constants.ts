@@ -1,2 +1,2 @@
-export const BACKEND_URL = "http://localhost:3000"
-export const FRONTEND_URL = "http://localhost:5173"
+export const BACKEND_URL = "https://credex-assignment-zt8k.onrender.com"
+export const FRONTEND_URL = "https://credex-assignment-1-2rgi.onrender.com"
