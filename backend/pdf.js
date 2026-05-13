@@ -1,6 +1,7 @@
 import PDFDocument from 'pdfkit';
 import { createWriteStream } from 'fs';
 import { marked } from 'marked';
+import RemoveMarkdown from 'remove-markdown';
 
 const TOOL_META = {
   gemini: { label: "Google Gemini", color: "#10b981" },
@@ -61,134 +62,21 @@ export function generatePDF(data) {
 
   // --- 3. SUMMARY ---
 
-  const tokens = marked.lexer(data.summary);
-
-  const renderMarkdown = (tokens, x, width) => {
-    tokens.forEach((token) => {
-      switch (token.type) {
-        case "heading":
-          doc
-            .font("Helvetica-Bold")
-            .fontSize(16)
-            .fillColor("#0f172a")
-            .text(token.text, x, doc.y, { width });
-
-          doc.moveDown(0.6);
-          break;
-
-        case "paragraph":
-          token.tokens.forEach((t, idx) => {
-            const continued = idx !== token.tokens.length - 1;
-
-            doc.font(
-              t.type === "strong"
-                ? "Helvetica-Bold"
-                : "Helvetica"
-            );
-
-            doc
-              .fontSize(12)
-              .fillColor("#334155")
-              .text(t.text, {
-                width,
-                continued,
-              });
-          });
-
-          doc.moveDown(0.8);
-          break;
-
-        case "list":
-          token.items.forEach((item) => {
-            doc
-              .font("Helvetica")
-              .fontSize(12)
-              .fillColor("#334155")
-              .text("• ", x, doc.y, {
-                continued: true,
-              });
-
-            item.tokens.forEach((t, idx) => {
-              const continued = idx !== item.tokens.length - 1;
-
-              doc.font(
-                t.type === "strong"
-                  ? "Helvetica-Bold"
-                  : "Helvetica"
-              );
-
-              doc.text(t.text, {
-                width: width - 20,
-                continued,
-              });
-            });
-
-            doc.moveDown(0.5);
-          });
-
-          doc.moveDown(0.4);
-          break;
-      }
-    });
-  };
-
-  // Estimate height roughly
-  doc.font("Helvetica").fontSize(12).lineGap(6);
-
-  const headingCount = (data.summary.match(/^#/gm) || []).length;
-  const bulletCount = (data.summary.match(/^- /gm) || []).length;
-
-  const estimatedHeight =
-    doc.heightOfString(
-      data.summary.replace(/[#*`>-]/g, ""),
-      {
-        width: contentWidth - 40,
-        lineGap: 6,
-      }
-    ) +
-    headingCount * 12 +
-    bulletCount * 6 +
-    30;
-
-  const sumBoxHeight = estimatedHeight;
+  const normalizedSummary = RemoveMarkdown(data.summary)
+  doc.font('Helvetica').fontSize(12).lineGap(6);
+  const summaryHeight = doc.heightOfString(normalizedSummary, { width: contentWidth - 40 });
+  const sumBoxHeight = 16 + 14 + 10 + summaryHeight + 20; // Exact padded height
 
   checkPageBreak(sumBoxHeight);
-
   const sumY = doc.y;
 
-  // Box
-  doc
-    .lineWidth(1)
-    .strokeColor("#e2e8f0")
-    .roundedRect(startX, sumY, contentWidth, sumBoxHeight, 8)
-    .stroke();
+  // Box & left-accent bar
+  doc.lineWidth(1).strokeColor('#e2e8f0').roundedRect(startX, sumY, contentWidth, sumBoxHeight, 8).stroke();
+  doc.save().roundedRect(startX, sumY, contentWidth, sumBoxHeight, 8).clip().rect(startX, sumY, 4, sumBoxHeight).fill('#e2e8f0').restore(); 
 
-  // Accent bar
-  doc
-    .save()
-    .roundedRect(startX, sumY, contentWidth, sumBoxHeight, 8)
-    .clip()
-    .rect(startX, sumY, 4, sumBoxHeight)
-    .fill("#e2e8f0")
-    .restore();
-
-  // Title
-  doc
-    .font("Courier-Bold")
-    .fontSize(10)
-    .fillColor("#94a3b8")
-    .text("SUMMARY", startX + 20, sumY + 16);
-
-  // Markdown content
-  doc.y = sumY + 40;
-
-  renderMarkdown(
-    tokens,
-    startX + 20,
-    contentWidth - 40
-  );
-
-  doc.y += 24;
+  doc.font('Courier-Bold').fontSize(10).fillColor('#94a3b8').text('SUMMARY', startX + 20, sumY + 16);
+  doc.font('Helvetica').fontSize(12).fillColor('#334155').text(normalizedSummary, startX + 20, sumY + 40, { width: contentWidth - 40 });
+  doc.y = sumY + sumBoxHeight + 24;
 
   // --- 4. DETAILED FINDINGS ---
   doc.font('Courier-Bold').fontSize(10).fillColor('#94a3b8').text('DETAILED FINDINGS', startX, doc.y);
